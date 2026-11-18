@@ -54,10 +54,10 @@ function home() {
         `<option value="${esc(g.id)}" ${g.id === proposto ? 'selected' : ''}>${esc(g.nome)}</option>`).join('')}</select>
         <button class="primario" data-azione="inizia">Inizia seduta</button></div>`
       : '<p>Nessuna scheda: importa il file di avvio da Scheda e dati.</p>';
-  app.innerHTML = `${ricorda}${avviso}${seduta}
-    <button data-azione="misura">Misura</button>
-    <section>${grafico(stato.misure)}</section>
-    <button data-azione="scheda">Scheda e dati</button>`;
+  app.innerHTML = `${ricorda}${avviso}<h1>Registro palestra</h1>
+    <section class="carta evidenza">${seduta}</section>
+    <section class="carta"><h2>Peso</h2>${grafico(stato.misure)}</section>
+    <div class="coppia"><button data-azione="misura">Misura</button><button data-azione="scheda">Scheda e dati</button></div>`;
 }
 
 // --- seduta ---
@@ -80,24 +80,29 @@ function bloccoEsercizio(s, es, aperto) {
   const n = fatte.length + 1;
   const ultima = fatte.at(-1);
   const proposta = valoriProposti(prec, es)[n - 1] || (ultima ? { kg: ultima.kg, reps: ultima.reps } : { kg: null, reps: null });
+  const completo = fatte.length >= es.serie;
   const pulsanti = (campo, passo) => [
     `<button data-azione="meno" data-campo="${campo}" data-passo="${passo}" aria-label="meno">−</button>`,
     `<button data-azione="piu" data-campo="${campo}" data-passo="${passo}" aria-label="più">+</button>`];
   const [menoKg, piuKg] = pulsanti('kg', es.passo);
   const [menoReps, piuReps] = pulsanti('reps', 1);
   return `<details data-esercizio="${esc(es.id)}" ${aperto ? 'open' : ''}>
-    <summary>${esc(es.nome)} <span class="conta">${fatte.length}/${es.serie}</span></summary>
+    <summary><span class="nome">${esc(es.nome)}</span> <span class="conta${completo ? ' completo' : ''}">${fatte.length}/${es.serie}</span></summary>
     ${es.nota ? `<p class="nota">${esc(es.nota)}</p>` : ''}
     <p class="prec">Volta scorsa: ${esc(prestazione(prec))}</p>
     ${barra(prec, es)}
     ${aumentoDovuto(prec, es) ? `<p class="aumento" data-test="aumento">+${kg(es.passo)} kg: tutte le serie a ${es.rangeMax} l'ultima volta</p>` : ''}
-    ${fatte.length ? `<ol class="fatte">${fatte.map(x => `<li>${kg(x.kg)} kg × ${x.reps}${x.rir == null ? '' : ` · RIR ${x.rir}`} <button data-azione="togli-serie" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}" data-n="${x.n}" aria-label="Togli serie ${x.n}">Togli</button></li>`).join('')}</ol>` : ''}
+    ${fatte.length ? `<ol class="fatte">${fatte.map(x => `<li><span>${kg(x.kg)} kg × ${x.reps}${x.rir == null ? '' : ` · RIR ${x.rir}`}</span><svg class="spunta" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg><button class="piccolo" data-azione="togli-serie" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}" data-n="${x.n}" aria-label="Togli serie ${x.n}">Togli</button></li>`).join('')}</ol>` : ''}
     <div class="serie" data-n="${n}">
       <span>Serie ${n}${n > es.serie ? ' (in più)' : ''}</span>
-      <div class="campo">${menoKg}<input name="kg" type="number" inputmode="decimal" step="any" aria-label="kg" value="${proposta.kg ?? ''}"><span>kg</span>${piuKg}</div>
-      <div class="campo">${menoReps}<input name="reps" type="number" inputmode="numeric" aria-label="ripetizioni" value="${proposta.reps ?? ''}"><span>rip.</span>${piuReps}</div>
-      <select name="rir" aria-label="RIR"><option value="">RIR</option>${[0, 1, 2, 3, 4].map(v => `<option value="${v}">${v}</option>`).join('')}</select>
-      <button class="primario" data-azione="fatto" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}">Fatto</button>
+      <div class="passi">
+        <div class="campo"><small>kg</small><div class="stepper">${menoKg}<input name="kg" type="number" inputmode="decimal" step="any" aria-label="kg" value="${proposta.kg ?? ''}">${piuKg}</div></div>
+        <div class="campo"><small>rip.</small><div class="stepper">${menoReps}<input name="reps" type="number" inputmode="numeric" aria-label="ripetizioni" value="${proposta.reps ?? ''}">${piuReps}</div></div>
+      </div>
+      <div class="azioni">
+        <select name="rir" aria-label="RIR"><option value="">RIR</option>${[0, 1, 2, 3, 4].map(v => `<option value="${v}">${v}</option>`).join('')}</select>
+        <button class="primario" data-azione="fatto" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}">Fatto</button>
+      </div>
       ${es.serie - fatte.length > 1 ? `<button data-azione="fatte-tutte" data-quante="${es.serie - fatte.length}" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}">Fatte tutte (${es.serie - fatte.length})</button>` : ''}
     </div>
   </details>`;
@@ -106,7 +111,9 @@ function bloccoEsercizio(s, es, aperto) {
 function mostraSeduta(id, aperto = null) {
   const s = stato.sedute.find(x => x.id === id);
   const giorno = stato.scheda.giorni.find(g => g.id === s.giorno) || { nome: `Giorno ${s.giorno}`, esercizi: [] };
-  app.innerHTML = `<h1>${esc(giorno.nome)} · ${formatoData(s.data)}</h1>
+  const completati = giorno.esercizi.filter(es => s.serie.filter(x => x.esercizioId === es.id).length >= es.serie).length;
+  app.innerHTML = `<header><h1>${esc(giorno.nome)} · ${formatoData(s.data)}</h1>
+    <p class="sotto">${completati}/${giorno.esercizi.length} esercizi completati</p></header>
     ${giorno.esercizi.map(es => bloccoEsercizio(s, es, es.id === aperto)).join('')}
     <button class="primario" data-azione="fine" data-seduta="${esc(s.id)}">Fine seduta</button>
     <button data-azione="home">Torna alla home</button>`;
@@ -179,12 +186,14 @@ async function chiudiSeduteVecchie() {
 function mostraMisura(data = oggi()) {
   const m = stato.misure.find(x => x.data === data) || {};
   const campo = (nome, etichetta) =>
-    `<label>${etichetta} <input name="${nome}" type="number" inputmode="decimal" step="any" value="${m[nome] ?? ''}"></label>`;
+    `<label><span>${etichetta}</span> <input name="${nome}" type="number" inputmode="decimal" step="any" value="${m[nome] ?? ''}"></label>`;
   app.innerHTML = `<h1>Misura</h1>
-    <label>Data <input name="data" type="date" value="${data}"></label>
+    <section class="carta campi">
+    <label><span>Data</span> <input name="data" type="date" value="${data}"></label>
     ${campo('peso', 'Peso (kg)')}${campo('grasso', 'Grasso (%)')}${campo('vita', 'Vita (cm)')}
+    </section>
     <button class="primario" data-azione="salva-misura">Salva</button>
-    ${m.data ? '<button data-azione="togli-misura">Togli misura</button>' : ''}
+    ${m.data ? '<button class="pericolo" data-azione="togli-misura">Togli misura</button>' : ''}
     <button data-azione="home">Torna alla home</button>`;
 }
 
@@ -219,25 +228,25 @@ function mostraScheda() {
 function disegnaScheda() {
   const ultima = stato.impostazioni.ultimaEsportazione;
   const numero = (nome, valore, etichetta, passo = '1') =>
-    `<label>${etichetta} <input name="${nome}" type="number" step="${passo}" value="${valore}"></label>`;
+    `<label><span>${etichetta}</span> <input name="${nome}" type="number" step="${passo}" value="${valore}"></label>`;
   app.innerHTML = `<h1>Scheda e dati</h1>
-    ${bozza.giorni.map((g, gi) => `<fieldset>
+    ${bozza.giorni.map((g, gi) => `<fieldset class="carta">
       <legend><input name="nomeGiorno" data-g="${gi}" aria-label="Nome del giorno" value="${esc(g.nome)}"></legend>
       ${g.esercizi.map((e, ei) => `<div class="esercizio" data-g="${gi}" data-i="${ei}">
-        <input name="nome" aria-label="Nome" value="${esc(e.nome)}">
-        ${numero('serie', e.serie, 'Serie')}${numero('rangeMin', e.rangeMin, 'Da')}${numero('rangeMax', e.rangeMax, 'a')}${numero('passo', e.passo, 'Passo kg', 'any')}
-        <input name="nota" aria-label="Nota" placeholder="Regolazioni della macchina" value="${esc(e.nota)}">
-        <button data-azione="su">Su</button><button data-azione="giu">Giù</button><button data-azione="togli">Togli</button>
+        <label><span>Esercizio</span> <input name="nome" aria-label="Nome" value="${esc(e.nome)}"></label>
+        <div class="quattro">${numero('serie', e.serie, 'Serie')}${numero('rangeMin', e.rangeMin, 'Rip. min')}${numero('rangeMax', e.rangeMax, 'Rip. max')}${numero('passo', e.passo, 'Passo kg', 'any')}</div>
+        <label><span>Regolazioni</span> <input name="nota" aria-label="Nota" placeholder="Regolazioni della macchina" value="${esc(e.nota)}"></label>
+        <div class="comandi"><button data-azione="su">Su</button><button data-azione="giu">Giù</button><button class="pericolo" data-azione="togli">Togli</button></div>
       </div>`).join('')}
       <button data-azione="aggiungi-esercizio" data-g="${gi}">Aggiungi esercizio</button>
     </fieldset>`).join('')}
     <button data-azione="aggiungi-giorno">Aggiungi giorno</button>
-    <button class="primario" data-azione="salva-scheda">Salva scheda</button>
-    <h2>Dati</h2>
+    <div class="fisso"><button class="primario" data-azione="salva-scheda">Salva scheda</button></div>
+    <section class="carta"><h2>Dati</h2>
     <p data-test="persistenza">Memoria persistente: ${persistente ? 'sì' : 'no, avviso di esportazione a 7 giorni'}</p>
     <p data-test="ultima-esportazione">Ultima esportazione: ${ultima ? formatoData(ultima) : 'mai'}</p>
-    <button data-azione="esporta">Esporta</button>
-    <label class="bottone">Importa <input id="importa" type="file" accept=".md,text/markdown,text/plain" hidden></label>
+    <div class="coppia"><button data-azione="esporta">Esporta</button>
+    <label class="bottone">Importa <input id="importa" type="file" accept=".md,text/markdown,text/plain" hidden></label></div></section>
     <button data-azione="home">Torna alla home</button>`;
 }
 

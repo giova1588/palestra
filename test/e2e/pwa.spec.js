@@ -23,7 +23,7 @@ test.describe('installazione', () => {
     });
     await page.reload();
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
-    await expect.poll(() => page.evaluate(async () => (await caches.keys()).sort())).toEqual(['altro-progetto', 'palestra-1']);
+    await expect.poll(() => page.evaluate(async () => (await caches.keys()).sort())).toEqual(['altro-progetto', 'palestra-3']);
   });
 
   test('manifest e icone raggiungibili', async ({ request }) => {

@@ -41,7 +41,7 @@ Telefono nuovo o dati persi: installa l'app e importa l'**ultimo** file esportat
 ## Per chi modifica il codice
 
 - **Non cambiare mai l'indirizzo dell'app** (nome del repository, account, cartella pubblicata): i dati sul telefono sono legati all'indirizzo, e con un indirizzo nuovo l'app ripartirebbe vuota. Se serve davvero: prima esporta, poi importa nel nuovo indirizzo.
-- A ogni pubblicazione cambia `CACHE` in `docs/sw.js` (es. `palestra-2`): è ciò che fa comparire «Nuova versione» sul telefono.
+- A ogni pubblicazione cambia `CACHE` in `docs/sw.js` (es. `palestra-3`): è ciò che fa comparire «Nuova versione» sul telefono.
 - Il service worker cancella solo le cache `palestra-*`: l'origine github.io è condivisa con altri progetti dello stesso account.
 - Nessun dato personale nel repository: i test usano dati inventati in `test/fixture.js`, e il file di avvio si genera fuori di qui con `node strumenti/crea-avvio.js <stato.json> <cartella>`.
 - Se cambia la forma dei dati, aumenta `FORMATO` in `docs/esporta.js` e scrivi lì la conversione dal formato precedente.
