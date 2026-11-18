@@ -319,3 +319,23 @@ async function avvio() {
 }
 
 avvio().catch(e => mostraErrore(`Avvio non riuscito: ${e?.message || e}`, false));
+
+// --- installazione e aggiornamenti ---
+
+let aggiornamentoChiesto = false;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nuovo = reg.installing;
+      nuovo.addEventListener('statechange', () => {
+        if (nuovo.state !== 'installed' || !navigator.serviceWorker.controller) return;
+        const box = document.getElementById('aggiorna');
+        box.innerHTML = 'Nuova versione disponibile. <button id="pulsante-aggiorna">Aggiorna</button>';
+        box.hidden = false;
+        document.getElementById('pulsante-aggiorna').onclick = () => { aggiornamentoChiesto = true; nuovo.postMessage('aggiorna'); };
+      });
+    });
+  });
+  // Si ricarica solo su richiesta: al primo avvio clients.claim cambia il controller senza che serva.
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (aggiornamentoChiesto) location.reload(); });
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Registro palestra",
+  "short_name": "Palestra",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f7",
+  "theme_color": "#1f6f78",
+  "icons": [
+    { "src": "icona-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
