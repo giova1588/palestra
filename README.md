@@ -22,7 +22,7 @@ Cosa guardare: dopo l'importazione la home mostra **Inizia seduta** con il giorn
 
 ## In palestra
 
-**Inizia seduta**, apri l'esercizio, controlla i valori già compilati, correggi con − e + e premi **Fatto** dopo ogni serie. Ogni serie si salva subito: se chiudi l'app, la seduta riprende da dov'eri. Quando l'app scrive «+2,5 kg: tutte le serie a 12 l'ultima volta», il carico proposto è già aumentato. Una seduta lasciata aperta si chiude da sola il giorno dopo.
+**Inizia seduta**, apri l'esercizio, controlla i valori già compilati, correggi con − e + e premi **Fatto** dopo ogni serie. Se tutte le serie rimaste hanno lo stesso carico e le stesse ripetizioni, **Fatte tutte (N)** le registra in un tocco con i valori della riga. Ogni serie si salva subito: se chiudi l'app, la seduta riprende da dov'eri. Quando l'app scrive «+2,5 kg: tutte le serie a 12 l'ultima volta», il carico proposto è già aumentato. Una seduta lasciata aperta si chiude da sola il giorno dopo.
 
 Per togliere o correggere una serie: **Togli** accanto alla serie, conferma, poi la riga di inserimento si ripropone con i suoi valori; correggi con − e + e premi **Fatto**. Le serie successive si rinumerano. **Fine seduta** su una seduta senza serie la elimina.
 

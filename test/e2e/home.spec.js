@@ -36,6 +36,8 @@ test('modifica della scheda salvata e ritrovata dopo il ricaricamento', async ({
   await page.getByRole('button', { name: 'Aggiungi esercizio' }).first().click();
   await page.locator('fieldset').first().locator('.esercizio').last().getByLabel('Nome').fill('Hip thrust');
   await page.getByRole('button', { name: 'Salva scheda' }).click();
+  // il salvataggio finisce quando si torna alla home: ricaricare prima lo interromperebbe
+  await expect(page.getByRole('button', { name: 'Inizia seduta' })).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Inizia seduta' }).click();
   await expect(page.locator('details')).toHaveCount(3);

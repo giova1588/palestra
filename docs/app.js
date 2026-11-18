@@ -98,6 +98,7 @@ function bloccoEsercizio(s, es, aperto) {
       <div class="campo">${menoReps}<input name="reps" type="number" inputmode="numeric" aria-label="ripetizioni" value="${proposta.reps ?? ''}"><span>rip.</span>${piuReps}</div>
       <select name="rir" aria-label="RIR"><option value="">RIR</option>${[0, 1, 2, 3, 4].map(v => `<option value="${v}">${v}</option>`).join('')}</select>
       <button class="primario" data-azione="fatto" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}">Fatto</button>
+      ${es.serie - fatte.length > 1 ? `<button data-azione="fatte-tutte" data-quante="${es.serie - fatte.length}" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}">Fatte tutte (${es.serie - fatte.length})</button>` : ''}
     </div>
   </details>`;
 }
@@ -128,11 +129,15 @@ async function fatto(pulsante) {
     mostraErrore('Inserisci un carico e un numero di ripetizioni validi.', false);
     return;
   }
-  s.serie.push({ esercizioId: es.id, nome: es.nome, rangeMin: es.rangeMin, rangeMax: es.rangeMax,
-    n: Number(riga.dataset.n), kg: Number(campoKg), reps, rir: rir === '' ? null : Number(rir) });
+  // «Fatte tutte» registra le serie rimaste con gli stessi valori, in un solo salvataggio
+  const quante = Number(pulsante.dataset.quante) || 1;
+  for (let i = 0; i < quante; i++) {
+    s.serie.push({ esercizioId: es.id, nome: es.nome, rangeMin: es.rangeMin, rangeMax: es.rangeMax,
+      n: Number(riga.dataset.n) + i, kg: Number(campoKg), reps, rir: rir === '' ? null : Number(rir) });
+  }
   pulsante.disabled = true; // un secondo tocco prima del salvataggio registrerebbe una serie doppia
   if (await salva(() => dati.salvaSeduta(s))) mostraSeduta(s.id, es.id);
-  else { s.serie.pop(); pulsante.disabled = false; }
+  else { s.serie.splice(-quante); pulsante.disabled = false; }
 }
 
 async function togliSerie(b) {
@@ -337,7 +342,7 @@ document.addEventListener('click', ev => {
   else if (['su', 'giu', 'togli', 'aggiungi-esercizio', 'aggiungi-giorno'].includes(a)) modificaScheda(a, b);
   else if (a === 'esporta') esporta();
   else if (a === 'meno' || a === 'piu') cambia(b, a === 'piu' ? 1 : -1);
-  else if (a === 'fatto') fatto(b);
+  else if (a === 'fatto' || a === 'fatte-tutte') fatto(b);
   else if (a === 'fine') fine(b.dataset.seduta);
 });
 

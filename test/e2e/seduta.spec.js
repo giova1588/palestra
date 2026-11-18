@@ -36,6 +36,23 @@ test('una serie confermata si salva e la seduta riprende dopo il ricaricamento',
   await expect(page.locator('details[data-esercizio="lat"] .conta')).toHaveText('1/4');
 });
 
+test('Fatte tutte registra in un tocco le serie rimaste con gli stessi valori', async ({ page }) => {
+  await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  await lat.getByRole('button', { name: 'Fatto' }).click();
+  await expect(lat.locator('.conta')).toHaveText('1/4');
+  await lat.locator('[name=kg]').fill('47.5');
+  await lat.locator('[name=reps]').fill('10');
+  await lat.getByRole('button', { name: 'Fatte tutte (3)' }).click();
+  await expect(lat.locator('.conta')).toHaveText('4/4');
+  await expect(lat.locator('.fatte li')).toHaveText([/^45 kg × 10/, /^47,5 kg × 10/, /^47,5 kg × 10/, /^47,5 kg × 10/]);
+  await expect(lat.getByRole('button', { name: /Fatte tutte/ })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('button', { name: 'Riprendi seduta A' }).click();
+  await expect(page.locator('details[data-esercizio="lat"] .conta')).toHaveText('4/4');
+});
+
 test('i pulsanti + e − usano il passo dell\'esercizio', async ({ page }) => {
   await iniziaA(page);
   const lat = page.locator('details[data-esercizio="lat"]');
@@ -92,9 +109,11 @@ test('Togli serie: rinumera le successive e precompila la riga con la serie tolt
   await iniziaA(page);
   const lat = page.locator('details[data-esercizio="lat"]');
   await lat.locator('summary').click();
-  for (const rir of ['', '2', '']) {
+  // dopo ogni Fatto la schermata si ridisegna: si aspetta il conteggio prima di toccare la riga nuova
+  for (const [i, rir] of ['', '2', ''].entries()) {
     if (rir) await lat.locator('[name=rir]').selectOption(rir);
     await lat.getByRole('button', { name: 'Fatto' }).click();
+    await expect(lat.locator('.conta')).toHaveText(`${i + 1}/4`);
   }
   await expect(lat.locator('.conta')).toHaveText('3/4');
   const messaggi = [];
