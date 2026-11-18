@@ -46,3 +46,29 @@ test('uno stato con forma sbagliata è rifiutato anche con codice giusto', async
   assert.equal(r.ok, false);
   assert.match(r.errore, /non è valido/);
 });
+
+async function conForma(modifica) {
+  const stato = statoDiProva();
+  modifica(stato);
+  const corpo = JSON.stringify({ formato: FORMATO, impronta: await impronta(JSON.stringify(stato)), stato });
+  return leggiEsportazione('```json palestra-ripristino\n' + corpo + '\n```\n');
+}
+for (const [nome, modifica] of [
+  ['seduta senza id', s => { delete s.sedute[0].id; }],
+  ['seduta con data non ISO', s => { s.sedute[0].data = '24/11/2026'; }],
+  ['seduta con serie non array', s => { s.sedute[0].serie = null; }],
+  ['serie con kg testuale', s => { s.sedute[0].serie[0].kg = '50'; }],
+  ['serie senza reps', s => { delete s.sedute[0].serie[0].reps; }],
+  ['misura con data non ISO', s => { s.misure[0].data = 'ieri'; }],
+  ['misura con peso testuale', s => { s.misure[0].peso = '80'; }],
+  ['misura senza vita', s => { delete s.misure[0].vita; }],
+  ['esercizio senza id', s => { delete s.scheda.giorni[0].esercizi[0].id; }],
+  ['esercizio con passo testuale', s => { s.scheda.giorni[0].esercizi[0].passo = '2.5'; }],
+  ['esercizio senza rangeMax', s => { delete s.scheda.giorni[0].esercizi[0].rangeMax; }],
+]) {
+  test(`forma sbagliata con codice giusto: ${nome}`, async () => {
+    const r = await conForma(modifica);
+    assert.equal(r.ok, false);
+    assert.match(r.errore, /non è valido/);
+  });
+}

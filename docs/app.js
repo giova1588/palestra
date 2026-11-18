@@ -126,8 +126,9 @@ async function fatto(pulsante) {
   }
   s.serie.push({ esercizioId: es.id, nome: es.nome, rangeMin: es.rangeMin, rangeMax: es.rangeMax,
     n: Number(riga.dataset.n), kg: Number(campoKg), reps, rir: rir === '' ? null : Number(rir) });
+  pulsante.disabled = true; // un secondo tocco prima del salvataggio registrerebbe una serie doppia
   if (await salva(() => dati.salvaSeduta(s))) mostraSeduta(s.id, es.id);
-  else s.serie.pop();
+  else { s.serie.pop(); pulsante.disabled = false; }
 }
 
 async function fine(id) {
@@ -253,15 +254,15 @@ function scarica(file) {
   a.href = URL.createObjectURL(file);
   a.download = file.name;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000); // revocato subito, il download può non partire
 }
 
 async function esporta() {
   const al = oggi();
-  const testo = await creaEsportazione(stato, stato.impostazioni.ultimaEsportazione || null, al);
-  // Chrome per Android condivide text/plain, non text/markdown.
-  const file = new File([testo], nomeFile(al), { type: 'text/plain' });
   try {
+    const testo = await creaEsportazione(stato, stato.impostazioni.ultimaEsportazione || null, al);
+    // Chrome per Android condivide text/plain, non text/markdown.
+    const file = new File([testo], nomeFile(al), { type: 'text/plain' });
     if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: file.name });
     else scarica(file);
   } catch (e) {

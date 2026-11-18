@@ -13,11 +13,29 @@ test.describe('installazione', () => {
     await expect(page.getByText('Nessuna scheda')).toBeVisible();
   });
 
+  test("l'attivazione cancella solo le vecchie cache palestra-*", async ({ page }) => {
+    await page.goto('/');
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await page.evaluate(async () => {
+      await caches.open('palestra-0');
+      await caches.open('altro-progetto');
+      await (await navigator.serviceWorker.getRegistration()).unregister();
+    });
+    await page.reload();
+    await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+    await expect.poll(() => page.evaluate(async () => (await caches.keys()).sort())).toEqual(['altro-progetto', 'palestra-1']);
+  });
+
   test('manifest e icone raggiungibili', async ({ request }) => {
     const manifest = await (await request.get('manifest.json')).json();
     expect(manifest.name).toBe('Registro palestra');
     for (const icona of manifest.icons) expect((await request.get(icona.src)).ok()).toBe(true);
   });
+});
+
+test('la pagina dichiara una Content-Security-Policy', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('meta[http-equiv="Content-Security-Policy"]')).toHaveAttribute('content', /default-src 'self'/);
 });
 
 test('nessuna chiamata di rete fuori dall\'indirizzo dell\'app', async ({ page, baseURL }) => {

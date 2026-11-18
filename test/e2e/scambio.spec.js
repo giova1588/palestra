@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { leggiEsportazione } from '../../docs/esporta.js';
+import { leggiEsportazione, creaEsportazione } from '../../docs/esporta.js';
+import { statoDiProva } from '../fixture.js';
 import { apri, importa, importaProva, testoDiProva, cambiaGiorno } from './aiuti.js';
 
 const vaiAScheda = page => page.getByRole('button', { name: 'Scheda e dati' }).click();
@@ -72,10 +73,41 @@ test('importare sopra sedute più recenti chiede conferma con avviso', async ({ 
   await expect(page.getByRole('button', { name: 'Riprendi seduta A' })).toBeVisible();
 });
 
+async function tuttoIntatto(page) {
+  await page.getByRole('button', { name: 'Torna alla home' }).click();
+  await expect(page.getByRole('button', { name: 'Inizia seduta' })).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#giorno')).toHaveValue('A');
+  const n = await page.evaluate(async () => { const s = await (await import('/dati.js')).leggiTutto(); return [s.scheda.giorni.length, s.sedute.length]; });
+  expect(n).toEqual([2, 2]);
+}
+
 test('un file modificato è rifiutato e i dati restano', async ({ page }) => {
   await apri(page);
+  await importaProva(page);
   await importa(page, await testoDiProva(t => t.replace('"reps":12', '"reps":13')));
   await expect(page.locator('#errore')).toContainText('codice di controllo');
-  await page.getByRole('button', { name: 'Torna alla home' }).click();
-  await expect(page.getByText('Nessuna scheda')).toBeVisible();
+  await tuttoIntatto(page);
+});
+
+test('un file con codice valido ma una seduta senza id è rifiutato e i dati restano', async ({ page }) => {
+  await apri(page);
+  await importaProva(page);
+  const stato = statoDiProva();
+  delete stato.sedute[0].id;
+  await importa(page, await creaEsportazione(stato, null, '2026-11-28'));
+  await expect(page.locator('#errore')).toContainText('non è valido');
+  await tuttoIntatto(page);
+});
+
+test('una scrittura che fallisce a metà della sostituzione lascia i dati di prima', async ({ page }) => {
+  await apri(page);
+  await importaProva(page);
+  const errore = await page.evaluate(async () => {
+    const m = await import('/dati.js');
+    try { await m.sostituisciTutto({ sedute: [{}], misure: [], scheda: { giorni: [] }, impostazioni: {} }); return null; } catch (e) { return e.name; }
+  });
+  expect(errore).toBe('DataError');
+  await page.reload();
+  await expect(page.locator('#giorno')).toHaveValue('A');
 });

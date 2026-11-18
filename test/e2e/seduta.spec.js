@@ -73,3 +73,14 @@ test('un errore di scrittura lascia la serie non confermata e lo dice', async ({
   await expect(lat.locator('.conta')).toHaveText('0/4');
   await expect(lat.locator('[name=kg]')).toHaveValue('45');
 });
+
+test('un doppio tocco su Fatto registra una sola serie', async ({ page }) => {
+  await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  await lat.getByRole('button', { name: 'Fatto' }).dblclick();
+  await expect(lat.locator('.conta')).toHaveText('1/4');
+  await page.reload();
+  await page.getByRole('button', { name: 'Riprendi seduta A' }).click();
+  await expect(page.locator('details[data-esercizio="lat"] .conta')).toHaveText('1/4');
+});

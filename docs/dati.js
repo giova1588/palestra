@@ -47,11 +47,18 @@ export const salvaImpostazioni = impostazioni => scrivi('chiavi', impostazioni, 
 export async function sostituisciTutto(stato) {
   const t = (await apri()).transaction(['sedute', 'misure', 'chiavi'], 'readwrite');
   const finita = fine(t);
-  for (const n of ['sedute', 'misure', 'chiavi']) t.objectStore(n).clear();
-  stato.sedute.forEach(s => t.objectStore('sedute').put(s));
-  stato.misure.forEach(m => t.objectStore('misure').put(m));
-  t.objectStore('chiavi').put(stato.scheda, 'scheda');
-  t.objectStore('chiavi').put(stato.impostazioni, 'impostazioni');
+  try {
+    for (const n of ['sedute', 'misure', 'chiavi']) t.objectStore(n).clear();
+    stato.sedute.forEach(s => t.objectStore('sedute').put(s));
+    stato.misure.forEach(m => t.objectStore('misure').put(m));
+    t.objectStore('chiavi').put(stato.scheda, 'scheda');
+    t.objectStore('chiavi').put(stato.impostazioni, 'impostazioni');
+  } catch (e) {
+    // senza abort la transazione si confermerebbe con i clear già fatti
+    t.abort();
+    finita.catch(() => {});
+    throw e;
+  }
   return finita;
 }
 

@@ -52,9 +52,19 @@ export async function creaEsportazione(stato, dal, al) {
   ].join('\n');
 }
 
+const dataIso = x => testo(x) && /^\d{4}-\d{2}-\d{2}$/.test(x);
+const testo = x => typeof x === 'string';
+const numero = x => typeof x === 'number';
+const numeroONull = x => x === null || numero(x);
+
 function valido(s) {
   return !!s && Array.isArray(s.sedute) && Array.isArray(s.misure) && !!s.scheda && Array.isArray(s.scheda.giorni)
-    && !!s.impostazioni && typeof s.impostazioni === 'object';
+    && !!s.impostazioni && typeof s.impostazioni === 'object'
+    && s.sedute.every(x => !!x && testo(x.id) && dataIso(x.data) && Array.isArray(x.serie)
+      && x.serie.every(r => !!r && numero(r.kg) && numero(r.reps)))
+    && s.misure.every(m => !!m && dataIso(m.data) && numeroONull(m.peso) && numeroONull(m.grasso) && numeroONull(m.vita))
+    && s.scheda.giorni.every(g => !!g && Array.isArray(g.esercizi) && g.esercizi.every(e => !!e && testo(e.id) && testo(e.nome)
+      && numero(e.serie) && numero(e.rangeMin) && numero(e.rangeMax) && numero(e.passo)));
 }
 
 export async function leggiEsportazione(testo) {
