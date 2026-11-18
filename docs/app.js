@@ -246,7 +246,7 @@ function disegnaScheda() {
     <p data-test="persistenza">Memoria persistente: ${persistente ? 'sì' : 'no, avviso di esportazione a 7 giorni'}</p>
     <p data-test="ultima-esportazione">Ultima esportazione: ${ultima ? formatoData(ultima) : 'mai'}</p>
     <div class="coppia"><button data-azione="esporta">Esporta</button>
-    <label class="bottone">Importa <input id="importa" type="file" accept=".md,text/markdown,text/plain" hidden></label></div></section>
+    <label class="bottone">Importa <input id="importa" type="file" accept=".md,.txt,text/markdown,text/plain" hidden></label></div></section>
     <button data-azione="home">Torna alla home</button>`;
 }
 
@@ -308,8 +308,11 @@ async function esporta() {
     const testo = await creaEsportazione(stato, stato.impostazioni.ultimaEsportazione || null, al);
     // Chrome per Android condivide text/plain, non text/markdown.
     const file = new File([testo], nomeFile(al), { type: 'text/plain' });
-    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: file.name });
-    else scarica(file);
+    if (!navigator.canShare?.({ files: [file] })) scarica(file);
+    else {
+      try { await navigator.share({ files: [file], title: file.name }); }
+      catch (e) { if (e.name === 'NotAllowedError') scarica(file); else throw e; } // condivisione rifiutata dal browser: il file va in Download
+    }
   } catch (e) {
     if (e.name !== 'AbortError') mostraErrore(`Esportazione non riuscita: ${e.message}`, false);
     return;

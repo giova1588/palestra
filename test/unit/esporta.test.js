@@ -4,7 +4,7 @@ import { creaEsportazione, leggiEsportazione, nomeFile, impronta, FORMATO } from
 import { statoDiProva } from '../fixture.js';
 
 test('nome del file', () => {
-  assert.equal(nomeFile('2026-12-01'), 'palestra-export-01-12-2026.md');
+  assert.equal(nomeFile('2026-12-01'), 'palestra-export-01-12-2026.txt');
 });
 test('andata e ritorno restituisce lo stato identico', async () => {
   const stato = statoDiProva();

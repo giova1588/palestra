@@ -10,7 +10,7 @@ export async function impronta(testo) {
 }
 
 export function nomeFile(alIso) {
-  return `palestra-export-${formatoData(alIso)}.md`;
+  return `palestra-export-${formatoData(alIso)}.txt`; // Chrome per Android rifiuta di condividere i .md
 }
 
 const perData = (a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0);

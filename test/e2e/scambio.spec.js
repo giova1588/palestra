@@ -13,7 +13,7 @@ test('senza condivisione il file si scarica ed è reimportabile', async ({ page 
   const scaricamento = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Esporta' }).click();
   const d = await scaricamento;
-  expect(d.suggestedFilename()).toBe('palestra-export-01-12-2026.md');
+  expect(d.suggestedFilename()).toBe('palestra-export-01-12-2026.txt');
   const r = await leggiEsportazione(await readFile(await d.path(), 'utf8'));
   expect(r.ok).toBe(true);
   expect(r.riepilogo.sedute).toBe(2);
@@ -45,6 +45,20 @@ test('con la condivisione annullata la data resta', async ({ page }) => {
   await expect(page.locator('[data-test=ultima-esportazione]')).toContainText('28-11-2026');
   await expect(page.locator('#errore')).toBeHidden();
   await expect(page.locator('[data-test=promemoria]')).toHaveCount(0);
+});
+
+test('con la condivisione rifiutata dal browser il file si scarica e la data si aggiorna', async ({ page }) => {
+  await apri(page, { data: '2026-11-28T10:00:00', condivisione: 'rifiutata' });
+  await importaProva(page);
+  await cambiaGiorno(page, '2026-12-01T10:00:00');
+  await vaiAScheda(page);
+  const scaricamento = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Esporta' }).click();
+  expect((await scaricamento).suggestedFilename()).toBe('palestra-export-01-12-2026.txt');
+  await expect(page.locator('#errore')).toBeHidden();
+  await expect(page.locator('[data-test=promemoria]')).toBeVisible();
+  await vaiAScheda(page);
+  await expect(page.locator('[data-test=ultima-esportazione]')).toContainText('01-12-2026');
 });
 
 test('avviso di esportazione oltre 14 giorni con memoria persistente', async ({ page }) => {

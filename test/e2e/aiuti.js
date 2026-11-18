@@ -1,12 +1,13 @@
 import { creaEsportazione } from '../../docs/esporta.js';
 import { statoDiProva } from '../fixture.js';
 
-// condivisione: 'assente' (si scarica il file), 'ok' (condivisione riuscita), 'annullata' (menu chiuso)
+// condivisione: 'assente' (si scarica il file), 'ok' (condivisione riuscita), 'annullata' (menu chiuso), 'rifiutata' (il browser nega la condivisione)
 export async function apri(page, { data = '2026-12-01T10:00:00', persistente = true, condivisione = 'assente' } = {}) {
   await page.clock.setFixedTime(new Date(data));
   await page.addInitScript(([p, modo]) => {
     Object.defineProperty(navigator, 'storage', { value: { persist: async () => p, persisted: async () => p }, configurable: true });
-    const share = modo === 'ok' ? async () => {} : modo === 'annullata' ? async () => { throw new DOMException('annullata', 'AbortError'); } : undefined;
+    const share = modo === 'ok' ? async () => {} : modo === 'annullata' ? async () => { throw new DOMException('annullata', 'AbortError'); }
+      : modo === 'rifiutata' ? async () => { throw new DOMException('Permission denied', 'NotAllowedError'); } : undefined;
     Object.defineProperty(navigator, 'share', { value: share, configurable: true });
     Object.defineProperty(navigator, 'canShare', { value: share ? () => true : undefined, configurable: true });
   }, [persistente, condivisione]);

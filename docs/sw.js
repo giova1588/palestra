@@ -1,5 +1,5 @@
 // Cambiare CACHE a ogni pubblicazione: è ciò che fa comparire «Nuova versione» sul telefono.
-const CACHE = 'palestra-3';
+const CACHE = 'palestra-4';
 const FILE = ['./', 'index.html', 'stile.css', 'app.js', 'dati.js', 'util.js', 'progressione.js', 'esporta.js',
   'grafico.js', 'manifest.json', 'icona.svg', 'icona-192.png', 'icona-512.png'];
 

@@ -32,7 +32,7 @@ Per togliere o correggere una serie: **Togli** accanto alla serie, conferma, poi
 
 ## Esportazione ogni 2 settimane
 
-**Scheda e dati** → **Esporta** → **Salva su Drive** → cartella `palestra-esportazioni`. Il file contiene tutto ciò che è successo dall'esportazione precedente e, in fondo, un blocco che permette di ripristinare tutti i dati. Se annulli il menu, l'esportazione non conta e l'avviso resta. Dopo l'invio controlla su Drive che il file sia comparso nella cartella: l'app non può saperlo.
+**Scheda e dati** → **Esporta** → **Salva su Drive** → cartella `palestra-esportazioni`. Il file contiene tutto ciò che è successo dall'esportazione precedente e, in fondo, un blocco che permette di ripristinare tutti i dati. Se annulli il menu, l'esportazione non conta e l'avviso resta. Dopo l'invio controlla su Drive che il file sia comparso nella cartella: l'app non può saperlo. Il file si chiama `palestra-export-DD-MM-YYYY.txt`: Chrome per Android non condivide i file `.md`. Se il browser rifiuta comunque la condivisione, il file finisce in **Download** e va caricato su Drive a mano.
 
 ## Ripristino
 
@@ -41,7 +41,7 @@ Telefono nuovo o dati persi: installa l'app e importa l'**ultimo** file esportat
 ## Per chi modifica il codice
 
 - **Non cambiare mai l'indirizzo dell'app** (nome del repository, account, cartella pubblicata): i dati sul telefono sono legati all'indirizzo, e con un indirizzo nuovo l'app ripartirebbe vuota. Se serve davvero: prima esporta, poi importa nel nuovo indirizzo.
-- A ogni pubblicazione cambia `CACHE` in `docs/sw.js` (es. `palestra-3`): è ciò che fa comparire «Nuova versione» sul telefono.
+- A ogni pubblicazione cambia `CACHE` in `docs/sw.js` (es. `palestra-4`): è ciò che fa comparire «Nuova versione» sul telefono.
 - Il service worker cancella solo le cache `palestra-*`: l'origine github.io è condivisa con altri progetti dello stesso account.
 - Nessun dato personale nel repository: i test usano dati inventati in `test/fixture.js`, e il file di avvio si genera fuori di qui con `node strumenti/crea-avvio.js <stato.json> <cartella>`.
 - Se cambia la forma dei dati, aumenta `FORMATO` in `docs/esporta.js` e scrivi lì la conversione dal formato precedente.
