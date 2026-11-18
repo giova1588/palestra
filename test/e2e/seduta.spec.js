@@ -58,6 +58,9 @@ test('una seduta aperta si chiude da sola il giorno dopo', async ({ page }) => {
 
 test('Fine seduta chiude e propone il giorno successivo', async ({ page }) => {
   await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  await lat.getByRole('button', { name: 'Fatto' }).click();
   await page.getByRole('button', { name: 'Fine seduta' }).click();
   await expect(page.locator('#giorno')).toHaveValue('B');
 });
@@ -83,4 +86,60 @@ test('un doppio tocco su Fatto registra una sola serie', async ({ page }) => {
   await page.reload();
   await page.getByRole('button', { name: 'Riprendi seduta A' }).click();
   await expect(page.locator('details[data-esercizio="lat"] .conta')).toHaveText('1/4');
+});
+
+test('Togli serie: rinumera le successive e precompila la riga con la serie tolta', async ({ page }) => {
+  await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  for (const rir of ['', '2', '']) {
+    if (rir) await lat.locator('[name=rir]').selectOption(rir);
+    await lat.getByRole('button', { name: 'Fatto' }).click();
+  }
+  await expect(lat.locator('.conta')).toHaveText('3/4');
+  const messaggi = [];
+  page.once('dialog', d => { messaggi.push(d.message()); d.accept(); });
+  await lat.getByRole('button', { name: 'Togli serie 2' }).click();
+  await expect(lat.locator('.conta')).toHaveText('2/4');
+  expect(messaggi).toEqual(['Togliere la serie 2: 45 kg × 9?']);
+  await expect(lat.locator('.serie > span')).toHaveText('Serie 3');
+  await expect(lat.locator('[name=kg]')).toHaveValue('45');
+  await expect(lat.locator('[name=reps]')).toHaveValue('9');
+  await expect(lat.locator('[name=rir]')).toHaveValue('2');
+  await page.reload();
+  await page.getByRole('button', { name: 'Riprendi seduta A' }).click();
+  const n = await page.evaluate(async () => (await (await import('/dati.js')).leggiTutto()).sedute.find(s => !s.chiusa).serie.map(x => x.n));
+  expect(n).toEqual([1, 2]);
+});
+
+test('Togli serie rifiutato dalla conferma non cambia nulla', async ({ page }) => {
+  await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  await lat.getByRole('button', { name: 'Fatto' }).click();
+  page.once('dialog', d => d.dismiss());
+  await lat.getByRole('button', { name: 'Togli serie 1' }).click();
+  await expect(lat.locator('.conta')).toHaveText('1/4');
+});
+
+test('Togli serie con salvataggio fallito ripristina lo stato e lo dice', async ({ page }) => {
+  await iniziaA(page);
+  const lat = page.locator('details[data-esercizio="lat"]');
+  await lat.locator('summary').click();
+  await lat.getByRole('button', { name: 'Fatto' }).click();
+  await page.evaluate(() => { IDBObjectStore.prototype.put = function () { throw new Error('disco pieno'); }; });
+  page.once('dialog', d => d.accept());
+  await lat.getByRole('button', { name: 'Togli serie 1' }).click();
+  await expect(page.locator('#errore')).toContainText('Salvataggio non riuscito');
+  await expect(lat.locator('.conta')).toHaveText('1/4');
+});
+
+test('Fine seduta senza serie elimina la seduta', async ({ page }) => {
+  await iniziaA(page);
+  await page.getByRole('button', { name: 'Fine seduta' }).click();
+  await expect(page.locator('#giorno')).toHaveValue('A');
+  await page.reload();
+  await expect(page.locator('#giorno')).toHaveValue('A');
+  const n = await page.evaluate(async () => (await (await import('/dati.js')).leggiTutto()).sedute.length);
+  expect(n).toBe(2);
 });

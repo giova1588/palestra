@@ -39,8 +39,17 @@ async function scrivi(negozio, valore, chiave) {
   return finita;
 }
 
+async function elimina(negozio, chiave) {
+  const t = (await apri()).transaction(negozio, 'readwrite');
+  const finita = fine(t);
+  t.objectStore(negozio).delete(chiave);
+  return finita;
+}
+
 export const salvaSeduta = seduta => scrivi('sedute', seduta);
 export const salvaMisura = misura => scrivi('misure', misura);
+export const eliminaSeduta = id => elimina('sedute', id);
+export const eliminaMisura = data => elimina('misure', data);
 export const salvaScheda = scheda => scrivi('chiavi', scheda, 'scheda');
 export const salvaImpostazioni = impostazioni => scrivi('chiavi', impostazioni, 'impostazioni');
 

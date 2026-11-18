@@ -87,7 +87,7 @@ function bloccoEsercizio(s, es, aperto) {
     <p class="prec">Volta scorsa: ${esc(prestazione(prec))}</p>
     ${barra(prec, es)}
     ${aumentoDovuto(prec, es) ? `<p class="aumento" data-test="aumento">+${kg(es.passo)} kg: tutte le serie a ${es.rangeMax} l'ultima volta</p>` : ''}
-    ${fatte.length ? `<ol class="fatte">${fatte.map(x => `<li>${kg(x.kg)} kg × ${x.reps}${x.rir == null ? '' : ` · RIR ${x.rir}`}</li>`).join('')}</ol>` : ''}
+    ${fatte.length ? `<ol class="fatte">${fatte.map(x => `<li>${kg(x.kg)} kg × ${x.reps}${x.rir == null ? '' : ` · RIR ${x.rir}`} <button data-azione="togli-serie" data-seduta="${esc(s.id)}" data-esercizio="${esc(es.id)}" data-n="${x.n}" aria-label="Togli serie ${x.n}">Togli</button></li>`).join('')}</ol>` : ''}
     <div class="serie" data-n="${n}">
       <span>Serie ${n}${n > es.serie ? ' (in più)' : ''}</span>
       <div class="campo">${menoKg}<input name="kg" type="number" inputmode="decimal" step="any" aria-label="kg" value="${proposta.kg ?? ''}"><span>kg</span>${piuKg}</div>
@@ -131,8 +131,28 @@ async function fatto(pulsante) {
   else { s.serie.pop(); pulsante.disabled = false; }
 }
 
+async function togliSerie(b) {
+  const s = stato.sedute.find(x => x.id === b.dataset.seduta);
+  const n = Number(b.dataset.n);
+  const x = s.serie.find(r => r.esercizioId === b.dataset.esercizio && r.n === n);
+  if (!confirm(`Togliere la serie ${n}: ${kg(x.kg)} kg × ${x.reps}?`)) return;
+  const prima = s.serie;
+  s.serie = prima.filter(r => r !== x).map(r => (r.esercizioId === x.esercizioId && r.n > n ? { ...r, n: r.n - 1 } : r));
+  if (!(await salva(() => dati.salvaSeduta(s)))) { s.serie = prima; return; }
+  mostraSeduta(s.id, x.esercizioId);
+  // la serie tolta si corregge con − e +: la riga di inserimento riparte dai suoi valori
+  const riga = app.querySelector(`details[data-esercizio="${CSS.escape(x.esercizioId)}"] .serie`);
+  riga.querySelector('[name=kg]').value = x.kg;
+  riga.querySelector('[name=reps]').value = x.reps;
+  riga.querySelector('[name=rir]').value = x.rir ?? '';
+}
+
 async function fine(id) {
   const s = stato.sedute.find(x => x.id === id);
+  if (!s.serie.length) { // una seduta aperta per errore non deve restare in archivio
+    if (await salva(() => dati.eliminaSeduta(id))) { stato.sedute = stato.sedute.filter(x => x !== s); home(); }
+    return;
+  }
   s.chiusa = true;
   if (await salva(() => dati.salvaSeduta(s))) home();
   else s.chiusa = false;
@@ -147,15 +167,22 @@ async function chiudiSeduteVecchie() {
 
 // --- misura ---
 
-function mostraMisura() {
-  const m = stato.misure.find(x => x.data === oggi()) || {};
+function mostraMisura(data = oggi()) {
+  const m = stato.misure.find(x => x.data === data) || {};
   const campo = (nome, etichetta) =>
     `<label>${etichetta} <input name="${nome}" type="number" inputmode="decimal" step="any" value="${m[nome] ?? ''}"></label>`;
   app.innerHTML = `<h1>Misura</h1>
-    <label>Data <input name="data" type="date" value="${oggi()}"></label>
+    <label>Data <input name="data" type="date" value="${data}"></label>
     ${campo('peso', 'Peso (kg)')}${campo('grasso', 'Grasso (%)')}${campo('vita', 'Vita (cm)')}
     <button class="primario" data-azione="salva-misura">Salva</button>
+    ${m.data ? '<button data-azione="togli-misura">Togli misura</button>' : ''}
     <button data-azione="home">Torna alla home</button>`;
+}
+
+async function togliMisura() {
+  const data = app.querySelector('[name=data]').value;
+  if (!confirm(`Togliere la misura del ${formatoData(data)}?`)) return;
+  if (await salva(() => dati.eliminaMisura(data))) { stato.misure = stato.misure.filter(x => x.data !== data); home(); }
 }
 
 async function salvaMisura() {
@@ -299,6 +326,8 @@ document.addEventListener('click', ev => {
   else if (a === 'riprendi') mostraSeduta(stato.sedute.find(s => !s.chiusa).id);
   else if (a === 'misura') mostraMisura();
   else if (a === 'salva-misura') salvaMisura();
+  else if (a === 'togli-misura') togliMisura();
+  else if (a === 'togli-serie') togliSerie(b);
   else if (a === 'scheda') mostraScheda();
   else if (a === 'salva-scheda') salvaScheda();
   else if (['su', 'giu', 'togli', 'aggiungi-esercizio', 'aggiungi-giorno'].includes(a)) modificaScheda(a, b);
@@ -309,6 +338,7 @@ document.addEventListener('click', ev => {
 });
 
 document.addEventListener('change', ev => {
+  if (ev.target.name === 'data' && ev.target.type === 'date' && ev.target.value) mostraMisura(ev.target.value);
   if (ev.target.id === 'importa' && ev.target.files[0]) importa(ev.target.files[0]);
 });
 

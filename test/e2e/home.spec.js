@@ -58,3 +58,24 @@ test('mostra se la memoria non è persistente', async ({ page }) => {
   await page.getByRole('button', { name: 'Scheda e dati' }).click();
   await expect(page.locator('[data-test=persistenza]')).toContainText('no');
 });
+
+test('cambiare la data ricarica i valori della misura e Togli misura la cancella', async ({ page }) => {
+  await apri(page);
+  await importaProva(page);
+  await page.getByRole('button', { name: 'Misura' }).click();
+  await expect(page.getByRole('button', { name: 'Togli misura' })).toHaveCount(0);
+  await page.getByLabel('Data').fill('2026-11-26');
+  await expect(page.getByLabel('Peso (kg)')).toHaveValue('80.4');
+  await expect(page.getByLabel('Grasso (%)')).toHaveValue('');
+  await expect(page.getByLabel('Vita (cm)')).toHaveValue('90');
+  await page.getByLabel('Data').fill('2026-12-01');
+  await expect(page.getByLabel('Peso (kg)')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Togli misura' })).toHaveCount(0);
+  await page.getByLabel('Data').fill('2026-11-26');
+  page.once('dialog', d => d.accept());
+  await page.getByRole('button', { name: 'Togli misura' }).click();
+  await expect(page.getByRole('button', { name: 'Scheda e dati' })).toBeVisible();
+  await page.reload();
+  const date = await page.evaluate(async () => (await (await import('/dati.js')).leggiTutto()).misure.map(m => m.data));
+  expect(date).toEqual(['2026-11-24', '2026-11-28']);
+});
