@@ -1,0 +1,13 @@
+{
+  "name": "registro-palestra",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "unit": "node --test \"test/unit/*.test.js\"",
+    "e2e": "playwright test",
+    "test": "npm run unit && npm run e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1"
+  }
+}
