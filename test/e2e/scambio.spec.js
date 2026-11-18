@@ -17,6 +17,11 @@ test('senza condivisione il file si scarica ed è reimportabile', async ({ page 
   const r = await leggiEsportazione(await readFile(await d.path(), 'utf8'));
   expect(r.ok).toBe(true);
   expect(r.riepilogo.sedute).toBe(2);
+  const promemoria = page.locator('[data-test=promemoria]');
+  await expect(promemoria).toHaveText('File passato a Drive: controlla che sia comparso nella cartella palestra-esportazioni.');
+  await page.getByRole('button', { name: 'Misura' }).click();
+  await page.getByRole('button', { name: 'Torna alla home' }).click();
+  await expect(promemoria).toHaveCount(0);
 });
 
 test('con la condivisione riuscita la data di esportazione si aggiorna', async ({ page }) => {
@@ -26,6 +31,7 @@ test('con la condivisione riuscita la data di esportazione si aggiorna', async (
   await vaiAScheda(page);
   await expect(page.locator('[data-test=ultima-esportazione]')).toContainText('28-11-2026');
   await page.getByRole('button', { name: 'Esporta' }).click();
+  await expect(page.locator('[data-test=promemoria]')).toBeVisible();
   await vaiAScheda(page);
   await expect(page.locator('[data-test=ultima-esportazione]')).toContainText('01-12-2026');
 });
@@ -38,6 +44,7 @@ test('con la condivisione annullata la data resta', async ({ page }) => {
   await page.getByRole('button', { name: 'Esporta' }).click();
   await expect(page.locator('[data-test=ultima-esportazione]')).toContainText('28-11-2026');
   await expect(page.locator('#errore')).toBeHidden();
+  await expect(page.locator('[data-test=promemoria]')).toHaveCount(0);
 });
 
 test('avviso di esportazione oltre 14 giorni con memoria persistente', async ({ page }) => {

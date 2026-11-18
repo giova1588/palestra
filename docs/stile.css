@@ -29,6 +29,7 @@ summary { font-weight: 600; min-height: 32px; }
 .avviso, .errore { padding: 10px 12px; border-radius: 10px; margin: 12px auto 0; max-width: 560px; }
 .avviso { border: 1px solid var(--avviso); color: var(--avviso); }
 .errore { border: 1px solid var(--errore); color: var(--errore); }
+.promemoria { padding: 10px 12px; border-radius: 10px; margin: 12px auto 0; max-width: 560px; border: 1px solid var(--accento); color: var(--accento); }
 svg { width: 100%; height: auto; }
 svg .pesata { fill: var(--tenue); }
 svg .media { fill: none; stroke: var(--accento); stroke-width: 2; }

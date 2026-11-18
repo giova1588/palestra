@@ -9,6 +9,7 @@ const boxErrore = document.getElementById('errore');
 let stato;
 let persistente = false;
 let bozza; // copia della scheda in modifica
+let promemoria = false; // dopo un'esportazione, per la prima home che si disegna
 
 // --- errori e salvataggi ---
 
@@ -42,6 +43,9 @@ function home() {
   const giorni = giorniDaEsportazione();
   const avviso = giorni > (persistente ? 14 : 7)
     ? `<div class="avviso" data-test="avviso-esporta">Ultima esportazione ${giorni} giorni fa: esporta ora. <button data-azione="esporta">Esporta</button></div>` : '';
+  const ricorda = promemoria
+    ? '<div class="promemoria" data-test="promemoria">File passato a Drive: controlla che sia comparso nella cartella palestra-esportazioni.</div>' : '';
+  promemoria = false;
   const proposto = giornoProposto();
   const seduta = aperta
     ? `<button class="primario" data-azione="riprendi">Riprendi seduta ${esc(aperta.giorno)}</button>`
@@ -50,7 +54,7 @@ function home() {
         `<option value="${esc(g.id)}" ${g.id === proposto ? 'selected' : ''}>${esc(g.nome)}</option>`).join('')}</select>
         <button class="primario" data-azione="inizia">Inizia seduta</button></div>`
       : '<p>Nessuna scheda: importa il file di avvio da Scheda e dati.</p>';
-  app.innerHTML = `${avviso}${seduta}
+  app.innerHTML = `${ricorda}${avviso}${seduta}
     <button data-azione="misura">Misura</button>
     <section>${grafico(stato.misure)}</section>
     <button data-azione="scheda">Scheda e dati</button>`;
@@ -297,7 +301,7 @@ async function esporta() {
     return;
   }
   stato.impostazioni = { ...stato.impostazioni, ultimaEsportazione: al };
-  if (await salva(() => dati.salvaImpostazioni(stato.impostazioni))) home();
+  if (await salva(() => dati.salvaImpostazioni(stato.impostazioni))) { promemoria = true; home(); }
 }
 
 async function importa(file) {
