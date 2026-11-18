@@ -11,7 +11,8 @@ export function ultimeSerie(sedute, esercizioId, escludiSedutaId = null) {
 
 // Spec, sezione 2: contano solo le prime N serie previste, tutte al massimo del range e allo stesso carico.
 export function aumentoDovuto(serie, esercizio) {
-  if (!serie || serie.length < esercizio.serie) return false;
+  // a corpo libero (passo 0) non c'è carico da aumentare: si progredisce solo con le ripetizioni
+  if (!esercizio.passo || !serie || serie.length < esercizio.serie) return false;
   const prime = serie.slice(0, esercizio.serie);
   return prime.every(x => x.kg === prime[0].kg && x.reps >= esercizio.rangeMax);
 }

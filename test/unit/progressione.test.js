@@ -21,6 +21,9 @@ test('le serie oltre le previste non contano', () => {
 test('nessun aumento con carichi diversi fra le serie', () => {
   assert.equal(aumentoDovuto([s(1, 50, 12), s(2, 50, 12), s(3, 47.5, 12), s(4, 50, 12)], es), false);
 });
+test('nessun aumento a corpo libero (passo 0)', () => {
+  assert.equal(aumentoDovuto([s(1, 0, 12), s(2, 0, 12), s(3, 0, 12), s(4, 0, 12)], { ...es, rangeMax: 12, passo: 0 }), false);
+});
 test('nessun aumento senza precedenti', () => {
   assert.equal(aumentoDovuto(null, es), false);
 });
